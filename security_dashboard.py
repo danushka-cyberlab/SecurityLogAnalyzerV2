@@ -80,7 +80,10 @@ try:
                     try:
                         valid_ip = ipaddress.ip_address(ip_text)
                     except ValueError:
-                        print(f"WARNING: Invalid IP address:{ip_text}")
+                        print(
+                            f"WARNING: Invalid IP address '{ip_text}' "
+                            f"on line {line_number}"
+                        )
                         continue
                 except ValueError:
                     print(
@@ -387,13 +390,13 @@ try:
                     f"Window start: {alert['window_start']}\n"
                     )
                 report.write(
-                    f"Window end: {alert['window_end']}\\n"
+                    f"Window end: {alert['window_end']}\n"
                     )
                 report.write(
                     f"Reason: {alert['reason']}\n"
                     )
         else:
-            report.write("On brute-force patterns detected.\n")
+            report.write("No brute-force patterns detected.\n")
         
 
     print("Security report saved: security_report.txt")
@@ -671,6 +674,77 @@ try:
 
     print("IP risk chart saved: ip_risk_distribution.png")        
     
+    # ===== CHART 5: FAILED LOGIN TIMELINE =====
+
+    timeline_events = sorted(
+        [
+            timestamp
+            for events in failed_ip_events.values()
+            for timestamp in events
+
+        ]
+    )
+    if timeline_events:
+        timeline_counts = defaultdict(int)
+
+        for timestamp in timeline_events:
+            time_label = timestamp.strftime("%Y-%m-%d %H:%M")
+            timeline_counts[time_label] += 1
+
+        timeline_labels = list(timeline_counts.keys())
+        timeline_values = list(timeline_counts.values())
+
+        plt.plot(
+            timeline_labels,
+            timeline_values,
+            marker="o",
+            linewidth=2
+        )
+
+        plt.title(
+            "Failed Login Attempts Over Time",
+            fontsize=16,
+            fontweight="bold",
+            pad=18
+        )
+
+        plt.xlabel("tine", fontsize=12)
+        plt.ylabel("Failed Login Attempts", fontsize=12)
+
+        plt.xticks(rotation=45, ha="right")
+        plt.grid(axis="y", linestyle="--", alpha=0.3)
+
+        plt.tight_layout()
+
+        timeline_chart_path = os.path.join(
+            project_folder,
+            "failed_login_timeline.png"
+        )
+
+        plt.savefig(
+            timeline_chart_path,
+            dpi=150,
+            bbox_inches="tight"
+        )
+
+        plt.close()
+
+        print(
+            "Timeline chart saved: "
+            "failed_login_timeline.png"
+        )
+
+    else:
+        print(
+            "No vailed failed-login events availble "
+            "for the timeline chart."
+        )
+
+
+
+
+
+
 except FileNotFoundError:
     print("ERROR: security_log.txt was not found.")
     print("Check the log path:", log_path)
